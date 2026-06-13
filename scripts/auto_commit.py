@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stop フックで実行。config の sync.auto_commit が true のときだけ ~/.task をコミットする。
+"""Stop フックで実行。config の sync.auto_commit が true のときだけ ~/.hiyokb をコミットする。
 
 既定は false（何もしない＝隠れた自動コミットをしない事故防止）。push はしない（手動）。
 """
@@ -8,7 +8,7 @@ import re
 import subprocess
 from datetime import datetime
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 CONFIG = os.path.join(TASK_ROOT, "config.yaml")
 
 
@@ -32,7 +32,7 @@ def main():
     subprocess.run(["git", "-C", TASK_ROOT, "add", "-A"], capture_output=True)
     msg = f"hiyokb auto-commit {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     subprocess.run(["git", "-C", TASK_ROOT, "commit", "-m", msg], capture_output=True)
-    print(f"hiyokb: ~/.task を自動コミットしました（{msg}）")
+    print(f"hiyokb: ~/.hiyokb を自動コミットしました（{msg}）")
 
 
 if __name__ == "__main__":

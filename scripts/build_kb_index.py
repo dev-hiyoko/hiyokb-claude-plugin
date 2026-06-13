@@ -5,14 +5,14 @@
 LLM ではなくファイル走査でメカニカルに作るため、再現性が高くトークンも使わない。
 
 使い方:
-  build_kb_index.py [<kb_dir> ...]   # 省略時は ~/.task/kb と projects/*/kb 全て
+  build_kb_index.py [<kb_dir> ...]   # 省略時は ~/.hiyokb/kb と projects/*/kb 全て
 """
 import glob
 import os
 import re
 import sys
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 SKIP = {"index.md", "SCHEMA.md"}
 
 

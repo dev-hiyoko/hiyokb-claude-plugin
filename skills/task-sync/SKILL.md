@@ -1,12 +1,12 @@
 ---
 name: task-sync
-description: 各ソース（GitHub / Slack / Backlog）から自分担当のタスクを取得し、~/.task/index.md を再生成して横断一覧を最新化する。「タスクを同期/更新」「今日のタスク（最新）を取ってきて」「割り当てられた issue を一覧」などのときに使う。
+description: 各ソース（GitHub / Slack / Backlog）から自分担当のタスクを取得し、~/.hiyokb/index.md を再生成して横断一覧を最新化する。「タスクを同期/更新」「今日のタスク（最新）を取ってきて」「割り当てられた issue を一覧」などのときに使う。
 allowed-tools: Bash, Read
 ---
 
 # task-sync — ソース横断のタスク収集と index 再マージ
 
-`~/.task/config.yaml` の `enabled_sources` / `identities` / `sources` を読み、**`enabled_sources` に含まれるソースだけ**収集する（個人PCは `[github]`、会社PCは `[github, slack, backlog]` 等）。**ソースごとに独立**して実行し、1つ失敗しても他と index を止めない。最後に決定論マージで index を再生成する。
+`~/.hiyokb/config.yaml` の `enabled_sources` / `identities` / `sources` を読み、**`enabled_sources` に含まれるソースだけ**収集する（個人PCは `[github]`、会社PCは `[github, slack, backlog]` 等）。**ソースごとに独立**して実行し、1つ失敗しても他と index を止めない。最後に決定論マージで index を再生成する。
 
 > `enabled_sources` に無いソースは取得もせず、index にも出さない（無効ソースの古いスナップショットは build_index が無視する）。
 
@@ -16,7 +16,7 @@ GitHub は `gh` CLI（スクリプトが直接取得）、Slack/Backlog は **MC
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/sync_github.py"
 ```
-- 成功: `~/.task/sources/github.md` を上書き。失敗: 前回値を保持し stale。
+- 成功: `~/.hiyokb/sources/github.md` を上書き。失敗: 前回値を保持し stale。
 - `gh auth status` が未ログインなら、その旨を伝え `gh auth login` を促す（こちらで認証はしない）。
 
 ## 2. Slack（MCP）

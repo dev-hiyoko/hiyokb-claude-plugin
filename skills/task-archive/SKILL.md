@@ -18,7 +18,7 @@ done のタスクで一定日数（config の `archive_after_days`、既定30）
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/task_archive.py"
    ```
-   - 退避は `~/.task/log.md` に記録される。
+   - 退避は `~/.hiyokb/log.md` に記録される。
    - 実行後 index は自動再生成される。
 
 ## 注意

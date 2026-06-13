@@ -10,7 +10,7 @@ allowed-tools: Read, Edit, Write, Bash, Glob
 
 ## 手順
 1. リンクする2つ以上のタスクID（`$ARGUMENTS`）を確認。**代表（primary）**を決める（ドシエがある方／開発の実体がある方を推奨）。
-2. 代表のドシエ（`~/.task/projects/<名>/tasks/<id>.md`）を特定。無ければ `${CLAUDE_PLUGIN_ROOT}/templates/dossier.md` を雛形に作成（frontmatter の id/source/project を埋める）。
+2. 代表のドシエ（`~/.hiyokb/projects/<名>/tasks/<id>.md`）を特定。無ければ `${CLAUDE_PLUGIN_ROOT}/templates/dossier.md` を雛形に作成（frontmatter の id/source/project を埋める）。
 3. 代表ドシエの frontmatter `relates_to` に同件を追記（**ローカル所有・sync で消えない**）:
    ```yaml
    relates_to: [{id: "slack-1718", rel: same_as}]

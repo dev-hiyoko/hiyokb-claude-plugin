@@ -14,7 +14,7 @@
   ※ broken の張り直しは意図を機械判断できないため report のみ（人が直す）。
 
 使い方:
-  kb_lint.py [--fix] [<kb_dir> ...]   # 省略時は ~/.task/kb と projects/*/kb 全て
+  kb_lint.py [--fix] [<kb_dir> ...]   # 省略時は ~/.hiyokb/kb と projects/*/kb 全て
 """
 import glob
 import os
@@ -22,7 +22,7 @@ import re
 import subprocess
 import sys
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKIP = {"index.md", "SCHEMA.md"}
 LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")

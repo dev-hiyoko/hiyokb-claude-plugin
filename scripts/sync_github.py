@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""GitHub から自分担当の open issue を取得し ~/.hiyokb/sources/github.md を更新する。
+"""GitHub から open issue を取得し ~/.hiyokb/sources/github.md を更新する。
+
+取得範囲は config の `sources.github.scopes` でプロジェクト（owner / owner/repo）単位に指定できる
+（業務 repo は assigned、個人 repo は created/all 等）。scopes 未設定なら従来どおり owners を
+assigned で取得する（後方互換）。
 
 - 成功時: 取得結果でスナップショットを上書き（stale: false）。
 - 失敗時（認証切れ/レート制限/オフライン）: 前回スナップショットを保持し stale: true を立てる
@@ -57,35 +61,73 @@ def write_snapshot(tasks, stale, error=None):
     open(SRC_FILE, "w", encoding="utf-8").write("\n".join(head))
 
 
-def fetch():
-    owners = _config.github_owners()          # 参照範囲（config。空なら @me 全部）
-    cmd = ["gh", "search", "issues", "--assignee=@me", "--state=open",
+FILTER_FLAG = {"assigned": "--assignee=@me", "created": "--author=@me",
+               "involves": "--involves=@me", "all": None}
+
+
+def _search(target=None, owners=None, filt="assigned"):
+    """gh search issues を1回実行し、生 items を返す。
+
+    target 指定時は owner/repo 単位（`/` 有無で自動判別）。owners 指定時は複数 owner を
+    1クエリに束ねる（従来挙動）。filt に応じて assignee/author/involves 修飾を付ける
+    （all は actor 修飾なし＝その範囲の open issue 全部）。
+    """
+    cmd = ["gh", "search", "issues", "--state=open",
            "--json", "number,title,url,repository,labels,updatedAt", "--limit", str(LIMIT)]
-    for o in owners:                           # 指定 owner のみに絞る
+    flag = FILTER_FLAG.get(filt)
+    if flag:
+        cmd.append(flag)
+    if target:
+        cmd.append(f"--repo={target}" if "/" in target else f"--owner={target}")
+    for o in (owners or []):
         cmd.append(f"--owner={o}")
     out = subprocess.run(cmd, capture_output=True, text=True)
     if out.returncode != 0:
         raise RuntimeError(out.stderr.strip() or "gh search failed")
     items = json.loads(out.stdout or "[]")
     if len(items) >= LIMIT:
-        print(f"github: ⚠️ 取得が上限 {LIMIT} 件に達しました。切り捨ての可能性があります"
-              f"（owner を config で絞るか、上限調整を検討）", file=sys.stderr)
-    tasks = []
+        where = target or (",".join(owners) if owners else "@me")
+        print(f"github: ⚠️ 取得が上限 {LIMIT} 件に達しました（範囲 {where} / {filt}）。"
+              f"切り捨ての可能性があります（scope を repo 単位に絞るか上限調整を検討）", file=sys.stderr)
+    return items
+
+
+def _normalize(items, filt):
+    tasks = {}
     for it in items:
         repo = (it.get("repository") or {}).get("nameWithOwner", "")
         num = it.get("number")
-        tasks.append({
-            "id": f"gh:{repo}#{num}",
+        tid = f"gh:{repo}#{num}"
+        tasks[tid] = {
+            "id": tid,
             "source": "github",
             "source_ref": it.get("url", ""),
             "title": it.get("title", ""),
             "status": "todo",
             "due": None,
-            "assignee": "me",
+            "assignee": "me" if filt == "assigned" else None,
+            "scope": filt,
             "labels": [l.get("name") for l in (it.get("labels") or [])],
             "updated": (it.get("updatedAt") or "")[:10],
-        })
+        }
     return tasks
+
+
+def fetch():
+    scopes = _config.github_scopes()          # プロジェクト単位の取得範囲（あれば優先）
+    merged = {}
+    if scopes:
+        for sc in scopes:                      # スコープごとに1クエリ。id でマージ（重複除去）
+            items = _search(target=sc["target"], filt=sc["filter"])
+            for tid, t in _normalize(items, sc["filter"]).items():
+                # 既出が assigned で後勝ちが弱い修飾なら上書きしない（出自の格上げを優先）
+                if tid not in merged or merged[tid].get("scope") != "assigned":
+                    merged[tid] = t
+    else:                                      # 後方互換: owners を assigned で（空なら @me 全体）
+        owners = _config.github_owners()
+        items = _search(owners=owners, filt="assigned")
+        merged = _normalize(items, "assigned")
+    return list(merged.values())
 
 
 def main():

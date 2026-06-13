@@ -62,6 +62,11 @@ hiyokb (plugin)
 マージキーは **task id**（例 `gh:owner/repo#123`）。ソースを別ファイルにしたことで、
 あるソースが取得失敗しても前回スナップショットを保持して index を壊さない（ソース単位の隔離）。
 同一案件が複数ソースに重複する場合は `relates_to: same_as` で結び、index 上で1グループに畳む。
+自動マッチングはしない（誤統合を避け、人が確信したものだけ結ぶ）。`task-list` は `link_audit.py`
+（決定論）を併せて実行し、**紐づき状況**（ソースのみ / ドシエあり / 複数ソースをリンク済）と、
+**未リンクの同名クロスソース候補**、`relates_to` の**迷子リンク**を提示する。候補の確定は
+ユーザー確認のうえ `task-link`（`relates_to` 追記）で行う。`assigned`/`all` のような取得 filter とは
+独立した、所有権を持つローカルの結節点（ドシエ）に紐づけを記録するため、再同期で消えない。
 
 同期方向は当面「読み取り（収集）中心」。外部への書き戻しは破壊的なので段階導入・実行前確認とする。
 
@@ -94,7 +99,16 @@ hiyokb (plugin)
 を設定で切り替える。プラグイン側に「個人/業務」のような区別ロジックは持たない。
 
 - `enabled_sources` — 取得するソース（無効ソースは取得もせず index にも出ない）。
-- `sources.github.owners` — GitHub の参照範囲（owner で限定。空なら担当 issue 全部）。
+- `sources.github.owners` — GitHub の参照範囲（owner で限定。空なら担当 issue 全部）。`scopes` 未指定時の後方互換。
+- `sources.<src>.scopes` — 取得範囲を target 単位で指定する**ソース横断の共通機構**（`_config.source_scopes`）。
+  各スコープは `<target> : <filter>`（filter 省略時はソース既定）で、スコープごとに別クエリを投げて
+  id でマージする。target/filter の意味はソース依存:
+  - **github**: target = owner / owner/repo、filter = `assigned`(既定)/`created`/`involves`/`all`。`scopes` は
+    `owners` に優先。マージ時 `assigned` を最優先。
+  - **backlog**: target = プロジェクトキー、filter = `assigned`(既定)/`all`。
+  - **slack**: target = チャンネル、filter = `mentions`(既定)/`all`。
+  これにより「業務系は自分アサインのみ・個人系はアサインせず立てたものも拾う」を1設定で両立できる
+  （アサインを前提にしない個人プロジェクトへの対応）。未設定ソースは従来どおり横断収集（後方互換）。
 - `identities` — 各ソースでの自分の識別子。
 
 ## 7. タスクのライフサイクル

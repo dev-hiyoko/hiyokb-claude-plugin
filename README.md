@@ -74,7 +74,8 @@ claude --plugin-dir /path/to/hiyokb
 | キー | 説明 | 例 |
 |---|---|---|
 | `enabled_sources` | 取得するソース。無効ソースは取得せず一覧にも出ない | `[github]` / `[github, slack, backlog]` |
-| `sources.github.owners` | GitHub の参照範囲（owner で限定。空なら担当 issue 全部） | `[your-org]` / `[your-account]` / `[]` |
+| `sources.github.owners` | GitHub の参照範囲（owner で限定。空なら担当 issue 全部）。`scopes` 未指定時の後方互換 | `[your-org]` / `[your-account]` / `[]` |
+| `sources.<src>.scopes` | 取得範囲を target 単位で指定（github=owner/repo・backlog=projectKey・slack=channel）。`<target> : <filter>` を1行1スコープ。下記参照 | 下記参照 |
 | `identities` | 各ソースでの自分の識別子（Slack/Backlog 収集に必要） | `github: your-account` |
 | `timezone` | 日付判定の基準 | `Asia/Tokyo` |
 | `capture.enabled` | 暗黙キャプチャ全体の on/off（false で従来どおり明示呼び出しのみ） | `true` |
@@ -86,6 +87,38 @@ claude --plugin-dir /path/to/hiyokb
 > `enabled_sources` と `owners` を変えるだけで分離できます（プラグイン側に区別ロジックは持ちません）。
 >
 > 暗黙キャプチャを完全に止めたいマシンでは `capture.enabled: false`、「勝手にドシエへ書くのは避けて生ログだけ残したい」なら `capture.auto_scope: inbox` にします。`capture:` ブロックが無い場合は暗黙キャプチャ有効・`auto_scope: dossier` が既定です。
+
+**取得範囲を細かく変える（`scopes`）** — 業務系はアサインされたものだけ、個人系はアサインせず立てた
+ものも拾う、を 1 設定で両立できます。**GitHub / Backlog / Slack で同じ `sources.<src>.scopes` 形式**
+（`<target> : <filter>` を 1 行 1 スコープ。filter 省略時はソース既定）。各スコープを別クエリで取得し
+id でマージします。GitHub では `scopes` が `owners` より優先されます。
+
+```yaml
+sources:
+  github:                          # target = owner または owner/repo
+    scopes:
+      - your-org : assigned          # owner 全体 → 自分にアサインされた issue（業務系）
+      - your-account/notes : created # 特定 repo → 自分が立てた issue 全部（未アサインも拾う）
+      - your-account/sandbox : all   # その repo の open issue を全部
+      - your-account/ideas           # filter 省略 → 既定 assigned
+  backlog:                         # target = プロジェクトキー
+    scopes:
+      - APLUS : assigned             # そのプロジェクトで自分担当の未完課題
+      - SANDBOX : all                # そのプロジェクトの未完課題を全部
+  slack:                           # target = チャンネル
+    scopes:
+      - "#aplus-dev" : mentions      # 自分へのメンション/スレッド
+      - "#aplus-ops" : all           # チャンネルのタスク候補を広めに
+```
+
+| source | target | filter |
+|---|---|---|
+| `github` | owner / owner-repo | `assigned`(既定) / `created`（自分が立てた・未アサインも） / `involves` / `all` |
+| `backlog` | プロジェクトキー | `assigned`(既定) / `all` |
+| `slack` | チャンネル | `mentions`(既定) / `all` |
+
+> `scopes` 未設定のソースは従来どおり「自分宛/自分担当を横断収集」（後方互換）。個人プロジェクトで
+> 「アサインせず issue を立てる」運用は、その repo/プロジェクトを `created` か `all` で追加すれば拾えます。
 
 ## ストア構成（`~/.hiyokb/`）
 

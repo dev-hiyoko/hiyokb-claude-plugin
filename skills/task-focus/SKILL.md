@@ -1,6 +1,6 @@
 ---
 name: task-focus
-description: 1つのタスクに着手・再開して、完了まで1ステップずつ誘導する。~/.task 配下のタスク・ドシエを作成または読込し、前回の進捗から再開し、タスク種別（bugfix/feature/research/review/docs/ops）に応じた標準手順をチェックリストとして展開し、次にやること1つを提示する。ユーザーが特定タスクに「着手したい/取りかかる/続きをやる/フォーカスする」とき（例:「gh#123 やる」「ログインのバグやろう」「CSVの件の続き」）に使う。
+description: 1つのタスクに着手・再開して、完了まで1ステップずつ誘導する。~/.hiyokb 配下のタスク・ドシエを作成または読込し、前回の進捗から再開し、タスク種別（bugfix/feature/research/review/docs/ops）に応じた標準手順をチェックリストとして展開し、次にやること1つを提示する。ユーザーが特定タスクに「着手したい/取りかかる/続きをやる/フォーカスする」とき（例:「gh#123 やる」「ログインのバグやろう」「CSVの件の続き」）に使う。
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -9,19 +9,19 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 `$ARGUMENTS` に着手対象（タスクID `gh#123` や自由記述「ログインのバグ」など）が渡される。以下の手順で進める。
 
 ## 0. 知識ストアの場所と初期化（bootstrap）
-- ストアのルートは `~/.task`（`$HOME/.task`）。**外部接続は不要**でローカルファイルのみで動く。
+- ストアのルートは `~/.hiyokb`（`$HOME/.hiyokb`）。**外部接続は不要**でローカルファイルのみで動く。
 - 無ければ作成する（初回のみ）:
-  - ディレクトリ: `~/.task/projects` `~/.task/inbox` `~/.task/sources` `~/.task/kb`
-  - `~/.task/index.md`（無ければ見出しだけの空一覧を作成）
-  - `~/.task/config.yaml`（無ければ最小テンプレを作成。タスク着手だけなら `identities` 等の設定は不要）
+  - ディレクトリ: `~/.hiyokb/projects` `~/.hiyokb/inbox` `~/.hiyokb/sources` `~/.hiyokb/kb`
+  - `~/.hiyokb/index.md`（無ければ見出しだけの空一覧を作成）
+  - `~/.hiyokb/config.yaml`（無ければ最小テンプレを作成。タスク着手だけなら `identities` 等の設定は不要）
 - 日付は `date +%F`（config の `timezone`、既定 Asia/Tokyo）で取得して使う。
 
 ## 1. タスクの特定
 - `$ARGUMENTS` から **タスクID** と **所属プロジェクト** を判断する。
   - IDが明示されていれば採用（`gh#123` → ファイル名は `gh-123` のように `#/ /` を `-` に正規化）。
-  - 自由記述なら、既存ドシエを `~/.task/projects/*/tasks/*.md` から Grep して一致を探す。
+  - 自由記述なら、既存ドシエを `~/.hiyokb/projects/*/tasks/*.md` から Grep して一致を探す。
   - プロジェクトが不明なら、既存の `projects/` 一覧を見せて**ユーザーに確認**（勝手に決めない）。新規プロジェクトなら名前を確認。
-- ドシエのパス: `~/.task/projects/<project>/tasks/<id>.md`
+- ドシエのパス: `~/.hiyokb/projects/<project>/tasks/<id>.md`
 
 ## 2. ドシエの読込（再開）or 作成（新規）
 - **既にある場合（再開を最優先）**:
@@ -29,7 +29,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
   - チェック済み/未チェックから**現在ステップ**を割り出し、**前回の続き（次の未完ステップ）**を復元する。
   - `status: blocked` なら、次アクションに書かれた**待ち対象・解除条件**を確認し、解除されたかをユーザーに尋ねる。
 - **無い場合（新規作成）**:
-  - `${CLAUDE_PLUGIN_ROOT}/templates/dossier.md` を雛形として読み、`~/.task/projects/<project>/tasks/<id>.md` を作成。
+  - `${CLAUDE_PLUGIN_ROOT}/templates/dossier.md` を雛形として読み、`~/.hiyokb/projects/<project>/tasks/<id>.md` を作成。
   - frontmatter（id/source/status/priority/type/project/created/updated 等）を分かる範囲で埋める。`created`/`updated` は今日の日付。
   - 概要・受け入れ条件を、分かる情報から下書き（不明なら箇条書きで「要確認」）。
 
@@ -50,7 +50,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 
 ## 5. 完了時（振り返り / grow）
 - 末尾の「振り返り」ステップで、効いた手順・ハマりどころを抽出。
-- 汎用的に再利用できる知見は「KBに残す候補」として `~/.task/kb/` への追記をユーザーに提案する。
+- 汎用的に再利用できる知見は「KBに残す候補」として `~/.hiyokb/kb/` への追記をユーザーに提案する。
 - ドシエが**それ単体で文脈を復元できる**状態か最後に確認する（R2 引き継ぎの担保）。
 
 ## 原則

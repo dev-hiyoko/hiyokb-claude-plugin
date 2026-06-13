@@ -1,6 +1,6 @@
 ---
 name: task-list
-description: 蓄積済みのタスク横断一覧（~/.task/index.md）を表示する。「タスク一覧」「今のタスク見せて」「やることリスト」などのときに使う。完了済みも含めるときは --all。最新の取得が必要なら task-sync を先に促す。
+description: 蓄積済みのタスク横断一覧（~/.hiyokb/index.md）を表示する。「タスク一覧」「今のタスク見せて」「やることリスト」などのときに使う。完了済みも含めるときは --all。最新の取得が必要なら task-sync を先に促す。
 allowed-tools: Bash, Read
 ---
 
@@ -9,7 +9,7 @@ allowed-tools: Bash, Read
 `$ARGUMENTS` に `--all` が含まれれば完了済みも表示。
 
 ## 手順
-- **通常（active のみ）**: `~/.task/index.md` を Read してそのまま提示。
+- **通常（active のみ）**: `~/.hiyokb/index.md` を Read してそのまま提示。
   - ファイルが古い/空の可能性があれば、`/hiyokb:task-sync` での同期を提案（こちらで勝手に同期はしない。ただしユーザーが「最新で」と言えば task-sync を実行）。
 - **`--all`（完了済みも含む）**: 上書きせず標準出力に全件を生成して提示:
   ```bash

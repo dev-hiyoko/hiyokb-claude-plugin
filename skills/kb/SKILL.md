@@ -1,6 +1,6 @@
 ---
 name: kb
-description: プロジェクトや汎用の知識をナレッジベース（~/.task/kb・projects/<名>/kb）に追記・検索・昇格する。「これKBに残して」「〜について知ってること」「ナレッジ化して」「過去の知見を調べて」などのときに使う。知識どうしをリンクで結び、横断的に引けるようにする。
+description: プロジェクトや汎用の知識をナレッジベース（~/.hiyokb/kb・projects/<名>/kb）に追記・検索・昇格する。「これKBに残して」「〜について知ってること」「ナレッジ化して」「過去の知見を調べて」などのときに使う。知識どうしをリンクで結び、横断的に引けるようにする。
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
@@ -19,7 +19,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 3. **出典付きで合成回答**。価値ある回答は新規ページ化して KB に還元してよい（その場合は「追記」へ）。
 
 ## 追記（新規ページ or 既存改訂）
-1. 行き先を決める: 横断汎用＝`~/.task/kb/`、特定プロジェクト＝`projects/<名>/kb/`。
+1. 行き先を決める: 横断汎用＝`~/.hiyokb/kb/`、特定プロジェクト＝`projects/<名>/kb/`。
 2. 新規は `${CLAUDE_PLUGIN_ROOT}/templates/kb-article.md` を雛形に作成。`title/summary/tags/source/updated` を埋める。**`source`（出自）は必須**。
 3. **リンクを必ず結ぶ（中核）**:
    - 本文で関連トピックを `[[トピック名]]` で参照。
@@ -29,7 +29,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build_kb_index.py"
    ```
-5. `~/.task/log.md` に追記される（lint/index 実行時）。大きな追記は一言サマリを残してもよい。
+5. `~/.hiyokb/log.md` に追記される（lint/index 実行時）。大きな追記は一言サマリを残してもよい。
 
 ## 昇格（inbox → KB / 昇格ゲート）
 - inbox の素材のうち、**出所が明確で確定した知識だけ**を KB ページ化する。

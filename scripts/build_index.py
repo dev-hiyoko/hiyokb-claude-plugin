@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""~/.task/index.md を決定論的に再マージ生成する。
+"""~/.hiyokb/index.md を決定論的に再マージ生成する。
 
 入力:
-  - ~/.task/sources/*.md   … ソース所有のスナップショット（```json ブロック）
-  - ~/.task/projects/*/tasks/*.md … ローカル所有のドシエ frontmatter
+  - ~/.hiyokb/sources/*.md   … ソース所有のスナップショット（```json ブロック）
+  - ~/.hiyokb/projects/*/tasks/*.md … ローカル所有のドシエ frontmatter
 出力:
-  - ~/.task/index.md       … 両者を task id でマージした横断ビュー
+  - ~/.hiyokb/index.md       … 両者を task id でマージした横断ビュー
 
 マージは所有権テーブルに従う:
   - ソース所有: title / status / due / labels / source_ref  → スナップショットが上書き
@@ -28,7 +28,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _config  # noqa: E402
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 SRC_DIR = os.path.join(TASK_ROOT, "sources")
 PROJ_DIR = os.path.join(TASK_ROOT, "projects")
 INDEX_FILE = os.path.join(TASK_ROOT, "index.md")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GitHub から自分担当の open issue を取得し ~/.task/sources/github.md を更新する。
+"""GitHub から自分担当の open issue を取得し ~/.hiyokb/sources/github.md を更新する。
 
 - 成功時: 取得結果でスナップショットを上書き（stale: false）。
 - 失敗時（認証切れ/レート制限/オフライン）: 前回スナップショットを保持し stale: true を立てる
@@ -15,7 +15,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _config  # noqa: E402
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 SRC_DIR = os.path.join(TASK_ROOT, "sources")
 SRC_FILE = os.path.join(SRC_DIR, "github.md")
 LIMIT = 200  # 取得上限。到達したら切り捨ての可能性を警告する

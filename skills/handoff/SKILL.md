@@ -9,10 +9,10 @@ allowed-tools: Bash, Read, Edit
 別セッションがドシエを読めば続きから再開できる状態にする（このプラグインの存在理由の半分）。
 
 ## 対象の特定
-- `$ARGUMENTS` でタスクが指定されればそれ。無ければ `~/.task/index.md` から **status が in_progress / blocked** のタスクを対象にする（複数なら各々）。
+- `$ARGUMENTS` でタスクが指定されればそれ。無ければ `~/.hiyokb/index.md` から **status が in_progress / blocked** のタスクを対象にする（複数なら各々）。
 
 ## 各タスクで行うこと
-1. ドシエ（`~/.task/projects/<名>/tasks/<id>.md`）を Read。
+1. ドシエ（`~/.hiyokb/projects/<名>/tasks/<id>.md`）を Read。
 2. 以下を簡潔にまとめる:
    - **現在地**: 手順のどのステップまで完了したか（チェックリスト）。
    - **直近の決定**: 決定事項から要点。

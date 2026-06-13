@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""生ソースを ~/.task/inbox に取り込む（不変保存）。
+"""生ソースを ~/.hiyokb/inbox に取り込む（不変保存）。
 
 - 内容の SHA1 で冪等化（同一内容は再取り込みしない）。
-- 取り込みを ~/.task/log.md に追記（追記専用クロニクル）。
+- 取り込みを ~/.hiyokb/log.md に追記（追記専用クロニクル）。
 - 原本は加工せずそのまま保存する（読むだけ・書き換えない）。
 
 使い方:
@@ -19,7 +19,7 @@ import shutil
 import sys
 from datetime import datetime
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 INBOX = os.path.join(TASK_ROOT, "inbox")
 MANIFEST = os.path.join(INBOX, ".manifest.json")
 LOG = os.path.join(TASK_ROOT, "log.md")

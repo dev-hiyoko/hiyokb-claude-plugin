@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP 等から取得したタスク一覧を、正準フォーマットで ~/.task/sources/<source>.md に書く。
+"""MCP 等から取得したタスク一覧を、正準フォーマットで ~/.hiyokb/sources/<source>.md に書く。
 
 GitHub は gh CLI でスクリプトが直接取得できるが、Slack/Backlog 等は MCP ツール経由
 （セッション内で Claude が呼ぶ）。スキルが正規化した結果をこのスクリプトに渡すことで、
@@ -18,7 +18,7 @@ import re
 import sys
 from datetime import datetime
 
-TASK_ROOT = os.path.expanduser("~/.task")
+TASK_ROOT = os.path.expanduser("~/.hiyokb")
 SRC_DIR = os.path.join(TASK_ROOT, "sources")
 
 

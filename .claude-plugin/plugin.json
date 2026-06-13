@@ -1,0 +1,9 @@
+{
+  "name": "hiyokb",
+  "description": "ツール非依存のタスク管理＆知識ベース。タスクのドシエ（実装方針・調査・決定事項・進捗）を ~/.task に蓄積し、種別ごとのワークフローで着手から完了まで1ステップずつ誘導。",
+  "version": "0.1.0",
+  "author": {
+    "name": "dev-hiyoko"
+  },
+  "keywords": ["task", "workflow", "knowledge-base", "dossier"]
+}

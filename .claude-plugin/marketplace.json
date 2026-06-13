@@ -1,0 +1,13 @@
+{
+  "name": "hiyokb-marketplace",
+  "owner": {
+    "name": "dev-hiyoko"
+  },
+  "plugins": [
+    {
+      "name": "hiyokb",
+      "source": ".",
+      "description": "ツール非依存のタスク管理＆知識ベース。タスクのドシエを ~/.task に蓄積し、種別ごとのワークフローで着手から完了まで誘導。"
+    }
+  ]
+}

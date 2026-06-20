@@ -17,10 +17,17 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 - 日付は `date +%F`（config の `timezone`、既定 Asia/Tokyo）で取得して使う。
 
 ## 1. タスクの特定
-- `$ARGUMENTS` から **タスクID** と **所属プロジェクト** を判断する。
+- **所属プロジェクトは「今いるリポジトリ」を既定にする**。まず解決:
+  ```bash
+  python3 "${CLAUDE_PLUGIN_ROOT}/scripts/project_bind.py" --whoami
+  ```
+  - project が出れば**それを既定の所属プロジェクト**にする（毎回聞かない）。
+  - 未束縛（repo はあるが project なし）なら「どのプロジェクト？」を確認 → `project_bind.py github <repo> <project>` で記憶してから進む。
+  - git 外なら従来どおり確認。
+- `$ARGUMENTS` から **タスクID** を判断する。
   - IDが明示されていれば採用（`gh#123` → ファイル名は `gh-123` のように `#/ /` を `-` に正規化）。
   - 自由記述なら、既存ドシエを `~/.hiyokb/projects/*/tasks/*.md` から Grep して一致を探す。
-  - プロジェクトが不明なら、既存の `projects/` 一覧を見せて**ユーザーに確認**（勝手に決めない）。新規プロジェクトなら名前を確認。
+  - 上記でプロジェクトが定まらない場合のみ、既存の `projects/` 一覧を見せて**ユーザーに確認**（勝手に決めない）。
 - ドシエのパス: `~/.hiyokb/projects/<project>/tasks/<id>.md`
 
 ## 2. ドシエの読込（再開）or 作成（新規）

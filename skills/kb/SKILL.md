@@ -19,7 +19,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 3. **出典付きで合成回答**。価値ある回答は新規ページ化して KB に還元してよい（その場合は「追記」へ）。
 
 ## 追記（新規ページ or 既存改訂）
-1. 行き先を決める: 横断汎用＝`~/.hiyokb/kb/`、特定プロジェクト＝`projects/<名>/kb/`。
+1. 行き先を決める。**既定は「今いるリポジトリのプロジェクト」の kb**（`project_bind.py --whoami` で解決し `projects/<project>/kb/` へ）。**複数プロジェクトに効く横断汎用な知識のときだけ** `~/.hiyokb/kb/`（global）に置く。どちらか迷うときはプロジェクト側に寄せる（後で横断昇格できる）。未束縛なら所属を確認してから。
 2. 新規は `${CLAUDE_PLUGIN_ROOT}/templates/kb-article.md` を雛形に作成。`title/summary/tags/source/updated` を埋める。**`source`（出自）は必須**。
 3. **リンクを必ず結ぶ（中核）**:
    - 本文で関連トピックを `[[トピック名]]` で参照。

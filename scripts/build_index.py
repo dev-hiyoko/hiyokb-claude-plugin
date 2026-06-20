@@ -151,7 +151,8 @@ def merge(src_tasks, src_meta, loc):
             "status": merge_status(s, l),
             "priority": (l or {}).get("priority") or "",
             "due": (s or {}).get("due") or (l or {}).get("due") or "",
-            "project": (l or {}).get("project") or "",
+            # project: ドシエ指定が最優先、無ければ project_map で id から振り分け
+            "project": (l or {}).get("project") or _config.route_task(tid) or "",
             "dossier": (l or {}).get("dossier") or "",
             "sensitive": bool((l or {}).get("sensitive")),
             "relates_to": (l or {}).get("relates_to") or [],
@@ -197,15 +198,18 @@ def fold_same_as(rows):
 
 
 # ---------- 出力 ----------
-def render(rows, src_meta, include_done):
+def render(rows, src_meta, include_done, project=None):
     today = datetime.now().strftime("%Y-%m-%d")
-    out = ["# タスク横断インデックス", "",
+    title_suffix = f"（プロジェクト: {project}）" if project else ""
+    out = ["# タスク横断インデックス" + title_suffix, "",
            f"> 自動生成（build_index.py） / 更新: {today}。手で編集しない（ドシエ frontmatter とソースキャッシュが真実）。", ""]
     if src_meta:
         out.append("**ソース同期状況**: " + " / ".join(
             f"{name} {'⚠️STALE' if m['stale'] else 'ok'}({(m['synced'] or '')[:16]})"
             for name, m in sorted(src_meta.items())) + "\n")
 
+    if project:
+        rows = [r for r in rows if r["project"] == project]
     visible = [r for r in rows if include_done or r["status"] != "done"]
     visible.sort(key=lambda r: (ACTIVE_ORDER.get(r["status"], 5), r["due"] or "9999", r["id"]))
 
@@ -227,17 +231,28 @@ def render(rows, src_meta, include_done):
     return "\n".join(out)
 
 
+def _arg_value(name):
+    """--name value / --name=value のどちらでも値を取り出す。"""
+    for i, a in enumerate(sys.argv):
+        if a == name and i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+        if a.startswith(name + "="):
+            return a.split("=", 1)[1]
+    return None
+
+
 def main():
     include_done = "--all" in sys.argv
     to_stdout = "--stdout" in sys.argv
+    project = _arg_value("--project")   # 指定時はそのプロジェクトのみ表示（index.md は常に全件）
     src_tasks, src_meta = load_sources()
     loc = load_dossiers()
     rows = merge(src_tasks, src_meta, loc)
-    text = render(rows, src_meta, include_done)
     if to_stdout:
-        sys.stdout.write(text)
+        sys.stdout.write(render(rows, src_meta, include_done, project=project))
     else:
-        open(INDEX_FILE, "w", encoding="utf-8").write(text)
+        # index.md は常に全件（プロジェクト絞りは --stdout 表示専用）
+        open(INDEX_FILE, "w", encoding="utf-8").write(render(rows, src_meta, include_done))
         n_active = sum(1 for r in rows if r["status"] != "done")
         stale = [n for n, m in src_meta.items() if m["stale"]]
         msg = f"index.md を再生成: active {n_active} 件"

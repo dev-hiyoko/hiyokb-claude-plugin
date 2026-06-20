@@ -5,6 +5,7 @@
 """
 import os
 import re
+import subprocess
 
 TASK_ROOT = os.path.expanduser("~/.hiyokb")
 CONFIG = os.path.join(TASK_ROOT, "config.yaml")
@@ -154,3 +155,101 @@ def capture_config():
         "session_capture": _b("session_capture", True),
         "auto_scope": scope,
     }
+
+
+# ===== プロジェクト境界（cwd=リポジトリ → hiyokb プロジェクトの束縛） =====
+# config の `project_map:` に「<source> <target> : <project>」を1行1件で持つ（起動時の質問で追記）。
+#   project_map:
+#     - github me/drovyu : drovyu
+#     - github ai2-jp/a-plusplus : a-plusplus
+#     - backlog DRV : drovyu
+#     - slack #drovyu : drovyu
+
+def project_map():
+    """project_map ブロックを [{source, target, project}] にして返す。"""
+    block = _indented_block(_text(), r"(?m)^[ \t]*project_map\s*:\s*$")
+    out = []
+    for line in block.splitlines():
+        ls = line.strip()
+        if ls == "":
+            continue
+        if not ls.startswith("-"):
+            break
+        body = ls[1:].strip()
+        ci = body.find(" #")
+        if ci != -1:
+            body = body[:ci].strip()
+        if ":" not in body:
+            continue
+        left, _, project = body.partition(":")
+        project = project.strip().strip("\"'")
+        parts = left.split(None, 1)
+        if len(parts) != 2 or not project:
+            continue
+        out.append({"source": parts[0].strip().lower(),
+                    "target": parts[1].strip().strip("\"'"), "project": project})
+    return out
+
+
+def _route(source, target):
+    """source/target をプロジェクトに解決。github は repo 完全一致 → owner 一致の順。"""
+    target = (target or "").lower()
+    owner_hit = None
+    for e in project_map():
+        if e["source"] != source:
+            continue
+        t = e["target"].lower()
+        if t == target:
+            return e["project"]
+        if source == "github" and "/" not in t and target.split("/", 1)[0] == t:
+            owner_hit = e["project"]
+    return owner_hit
+
+
+def route_task(task_id):
+    """タスク id（gh:owner/repo#n / bl:KEY-n / slack:ch-ts）からプロジェクトを解決（無ければ ""）。"""
+    if not task_id:
+        return ""
+    if task_id.startswith("gh:"):
+        return _route("github", task_id[3:].split("#", 1)[0]) or ""
+    if task_id.startswith("bl:"):
+        key = task_id[3:]
+        return _route("backlog", key.rsplit("-", 1)[0] if "-" in key else key) or ""
+    if task_id.startswith("slack:"):
+        return _route("slack", task_id[6:].rsplit("-", 1)[0]) or ""
+    return ""
+
+
+def current_repo(cwd):
+    """cwd の git remote(origin) から owner/repo を取り出す（無ければ None）。"""
+    if not cwd:
+        return None
+    try:
+        out = subprocess.run(["git", "-C", cwd, "remote", "get-url", "origin"],
+                             capture_output=True, text=True, timeout=5)
+        url = out.stdout.strip()
+    except Exception:
+        return None
+    m = re.search(r"[:/]([^/:]+)/([^/]+?)(?:\.git)?$", url)
+    return f"{m.group(1)}/{m.group(2)}" if m else None
+
+
+def current_project(cwd):
+    """cwd → (repo, project)。repo 未取得なら (None, None)、未束縛なら (repo, None)。"""
+    repo = current_repo(cwd)
+    if not repo:
+        return None, None
+    return repo, _route("github", repo)
+
+
+def add_binding(source, target, project):
+    """project_map に束縛を1件追記する（hiyokb 唯一の config 書き込み＝「聞いて記憶」）。"""
+    txt = _text()
+    line = f"  - {source} {target} : {project}"
+    if re.search(r"(?m)^[ \t]*project_map\s*:\s*$", txt):
+        new = re.sub(r"(?m)^([ \t]*project_map\s*:[ \t]*)$", r"\1\n" + line, txt, count=1)
+    else:
+        new = txt.rstrip() + "\n\nproject_map:\n" + line + "\n"
+    with open(CONFIG, "w", encoding="utf-8") as f:
+        f.write(new)
+    return line.strip()

@@ -76,6 +76,7 @@ claude --plugin-dir /path/to/hiyokb
 | `enabled_sources` | 取得するソース。無効ソースは取得せず一覧にも出ない | `[github]` / `[github, slack, backlog]` |
 | `sources.github.owners` | GitHub の参照範囲（owner で限定。空なら担当 issue 全部）。`scopes` 未指定時の後方互換 | `[your-org]` / `[your-account]` / `[]` |
 | `sources.<src>.scopes` | 取得範囲を target 単位で指定（github=owner/repo・backlog=projectKey・slack=channel）。`<target> : <filter>` を1行1スコープ。下記参照 | 下記参照 |
+| `project_map` | リポジトリ等→hiyokb プロジェクトの束縛。`<source> <target> : <project>` を1行1件（未束縛は起動時に質問して追記）。下記参照 | 下記参照 |
 | `identities` | 各ソースでの自分の識別子（Slack/Backlog 収集に必要） | `github: your-account` |
 | `timezone` | 日付判定の基準 | `Asia/Tokyo` |
 | `capture.enabled` | 暗黙キャプチャ全体の on/off（false で従来どおり明示呼び出しのみ） | `true` |
@@ -119,6 +120,30 @@ sources:
 
 > `scopes` 未設定のソースは従来どおり「自分宛/自分担当を横断収集」（後方互換）。個人プロジェクトで
 > 「アサインせず issue を立てる」運用は、その repo/プロジェクトを `created` か `all` で追加すれば拾えます。
+
+### プロジェクト境界（今いるリポジトリ＝プロジェクト）
+
+1つのプロジェクトが**複数リポジトリ・Backlog・Slack チャンネル**にまたがるとき、「今いるリポジトリが
+どの hiyokb プロジェクトか」を `project_map` で束ねます。これにより **SessionStart の表示・タスク一覧・
+暗黙キャプチャ・KB の宛先が現プロジェクトに限定**され、別プロジェクトのものが混ざりません。
+
+```yaml
+project_map:
+  - github me/drovyu        : drovyu     # 複数 repo を…
+  - github me/drovyu-infra  : drovyu     # …同じプロジェクトに束ねる
+  - backlog DRV             : drovyu     # Backlog プロジェクトキー
+  - slack  #drovyu          : drovyu     # Slack チャンネル
+  - github ai2-jp/a-plusplus : a-plusplus
+```
+
+- **解決**: 起動した cwd の `git remote(origin)` → `owner/repo` → `project_map` で project を決定。
+- **未束縛なら起動時に質問**: 対応が無いリポジトリでは「どのプロジェクト？」と確認し、答えを記憶:
+  ```bash
+  python3 scripts/project_bind.py github <owner/repo> <project>   # 次回から自動解決
+  python3 scripts/project_bind.py --whoami                        # 現在地の解決結果を確認
+  ```
+- **収集は全体・表示は現プロジェクト**: `sync` は従来どおり全ソースを集め、`build_index` が id から
+  `project_map` で各タスクを振り分けます。`task-list` は既定で現プロジェクトのみ（「全プロジェクト」で横断）。
 
 ## ストア構成（`~/.hiyokb/`）
 

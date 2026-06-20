@@ -1,20 +1,32 @@
 ---
 name: task-list
-description: 蓄積済みのタスク横断一覧（~/.hiyokb/index.md）を表示する。「タスク一覧」「今のタスク見せて」「やることリスト」などのときに使う。完了済みも含めるときは --all。最新の取得が必要なら task-sync を先に促す。
+description: 蓄積済みのタスク一覧を表示する。既定は「今いるリポジトリ＝プロジェクト」のタスクだけ。「タスク一覧」「今のタスク見せて」「やることリスト」などのときに使う。「全プロジェクト」「全部」と言われたら横断表示、「完了も」で done も含める。
 allowed-tools: Bash, Read
 ---
 
-# task-list — タスク横断一覧の表示
+# task-list — タスク（現プロジェクト既定）の一覧表示
 
-`$ARGUMENTS` に `--all` が含まれれば完了済みも表示。
+`$ARGUMENTS` / 文脈の解釈: 「全プロジェクト・全部」=横断表示 / 「完了も・done も」=完了済みも含む。
+（`build_index.py` のフラグ: `--project <名>`=絞り込み、`--all`=done 込み、`--stdout`=表示専用）
 
 ## 手順
-- **通常（active のみ）**: `~/.hiyokb/index.md` を Read してそのまま提示。
-  - ファイルが古い/空の可能性があれば、`/hiyokb:task-sync` での同期を提案（こちらで勝手に同期はしない。ただしユーザーが「最新で」と言えば task-sync を実行）。
-- **`--all`（完了済みも含む）**: 上書きせず標準出力に全件を生成して提示:
-  ```bash
-  python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build_index.py" --all --stdout
-  ```
+1. **現プロジェクトを判定**（既定はこのリポジトリのタスクだけ表示）:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/project_bind.py" --whoami
+   ```
+2. **絞り込んで表示**:
+   - **project が出た（既定）**: そのプロジェクトのみ:
+     ```bash
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build_index.py" --stdout --project <project>
+     ```
+   - **「全プロジェクト」要求**: `--project` を付けずに横断表示:
+     ```bash
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build_index.py" --stdout
+     ```
+   - **未束縛（repo はあるが project なし）**: その旨を伝え「どのプロジェクト？」を確認 → `project_bind.py github <repo> <project>` で記憶してから絞り込む。確認できるまでは横断表示にフォールバックし、未束縛である旨を明示。
+   - **repo 無し（git 外）**: 横断表示。
+   - 「完了も」のときは上記コマンドに `--all` を追加。
+   - index が古い/空なら `/hiyokb:task-sync` を提案（勝手に同期しない。「最新で」と言われたら実行）。
 
 ## 参照元 ↔ タスクの紐づき状況（毎回あわせて提示）
 一覧と一緒に、各タスクが「ソースのみ／ドシエあり／複数ソースをリンク済」のどれか、未リンクの重複候補、リンクの健全性を出す:

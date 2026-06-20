@@ -17,6 +17,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _config  # noqa: E402
 from _config import capture_config  # noqa: E402
 
 TASK_ROOT = os.path.expanduser("~/.hiyokb")
@@ -114,11 +115,14 @@ def main():
     short = re.sub(r"[^0-9a-zA-Z]", "", session_id)[:8] or "session"
     dest = os.path.join(SESSIONS, f"{today}_{short}.md")
 
+    repo, project = _config.current_project(cwd)   # cwd → 起動リポジトリ → プロジェクト
     lines = [
         "---",
         f"source: session:{session_id}",
         f"captured: {today}",
         f"cwd: {cwd}",
+        f"repo: {repo or ''}",
+        f"project: {project or ''}   # 空なら未束縛（/ingest 時に振り分け先を確認）",
         f"end_reason: {reason}",
         "kind: session-capture",
         "sensitive: false  # 不明。社外秘を含むなら true に",

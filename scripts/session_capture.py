@@ -122,7 +122,7 @@ def main():
         f"captured: {today}",
         f"cwd: {cwd}",
         f"repo: {repo or ''}",
-        f"project: {project or ''}   # 空なら未束縛（/ingest 時に振り分け先を確認）",
+        f"project: {project or ''}   # 空ならプロジェクト未設定（/ingest 時に振り分け先を確認）",
         f"end_reason: {reason}",
         "kind: session-capture",
         "sensitive: false  # 不明。社外秘を含むなら true に",

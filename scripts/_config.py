@@ -157,7 +157,7 @@ def capture_config():
     }
 
 
-# ===== プロジェクト境界（cwd=リポジトリ → hiyokb プロジェクトの束縛） =====
+# ===== プロジェクト境界（cwd=リポジトリ → hiyokb プロジェクトの割り当て） =====
 # config の `project_map:` に「<source> <target> : <project>」を1行1件で持つ（起動時の質問で追記）。
 #   project_map:
 #     - github me/drovyu : drovyu
@@ -235,7 +235,7 @@ def current_repo(cwd):
 
 
 def current_project(cwd):
-    """cwd → (repo, project)。repo 未取得なら (None, None)、未束縛なら (repo, None)。"""
+    """cwd → (repo, project)。repo 未取得なら (None, None)、プロジェクト未設定なら (repo, None)。"""
     repo = current_repo(cwd)
     if not repo:
         return None, None
@@ -243,7 +243,7 @@ def current_project(cwd):
 
 
 def add_binding(source, target, project):
-    """project_map に束縛を1件追記する（hiyokb 唯一の config 書き込み＝「聞いて記憶」）。"""
+    """project_map に割り当てを1件追記する（hiyokb 唯一の config 書き込み＝「聞いて記憶」）。"""
     txt = _text()
     line = f"  - {source} {target} : {project}"
     if re.search(r"(?m)^[ \t]*project_map\s*:\s*$", txt):

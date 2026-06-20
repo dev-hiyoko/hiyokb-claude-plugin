@@ -22,7 +22,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep
   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/project_bind.py" --whoami
   ```
   - project が出れば**それを既定の所属プロジェクト**にする（毎回聞かない）。
-  - 未束縛（repo はあるが project なし）なら「どのプロジェクト？」を確認 → `project_bind.py github <repo> <project>` で記憶してから進む。
+  - プロジェクト未設定（repo はあるが未登録）なら「このリポジトリはどのプロジェクトの作業ですか？」を確認 → `project_bind.py github <repo> <プロジェクト名>` で登録してから進む。
   - git 外なら従来どおり確認。
 - `$ARGUMENTS` から **タスクID** を判断する。
   - IDが明示されていれば採用（`gh#123` → ファイル名は `gh-123` のように `#/ /` を `-` に正規化）。

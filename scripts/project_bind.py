@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""リポジトリ等のソース対象を hiyokb プロジェクトに束縛する（「聞いて記憶」を保存する）。
+"""リポジトリ等を hiyokb プロジェクトに割り当てて記憶する（「どのリポジトリ＝どのプロジェクトか」）。
 
-起動したリポジトリが未束縛のとき、スキルがユーザーに「どのプロジェクト？」と確認し、
-答えをここで config の project_map に追記する。これで次回からは自動でそのプロジェクトに解決される。
+プロジェクト未設定のリポジトリで起動したとき、スキルがユーザーに「どのプロジェクト？」と確認し、
+答えをここで config の project_map に追記する。これで次回からは自動でそのプロジェクトに判別される。
 
 使い方:
   project_bind.py <source> <target> <project>   # 例: project_bind.py github me/drovyu drovyu
-  project_bind.py --list                          # 既存の束縛と既知プロジェクトを表示
-  project_bind.py --whoami [<cwd>]                # cwd の repo と解決先プロジェクトを表示
+  project_bind.py --list                          # 登録済みの割り当てとプロジェクト一覧を表示
+  project_bind.py --whoami [<cwd>]                # 今いるリポジトリと、その所属プロジェクトを表示
 """
 import glob
 import os
@@ -32,22 +32,22 @@ def main():
 
     if args[0] == "--list":
         m = _config.project_map()
-        print("## 束縛 (project_map)")
+        print("## リポジトリ→プロジェクトの割り当て")
         for e in m or []:
             print(f"- {e['source']} {e['target']} → {e['project']}")
         if not m:
-            print("- （未設定）")
-        print("## 既知プロジェクト")
-        print(", ".join(known_projects()) or "（なし）")
+            print("- （まだ無し）")
+        print("## 登録済みプロジェクト")
+        print(", ".join(known_projects()) or "（まだ無し）")
         return
 
     if args[0] == "--whoami":
         cwd = args[1] if len(args) > 1 else os.getcwd()
         repo, project = _config.current_project(cwd)
         print(f"repo: {repo or '(git remote なし)'}")
-        print(f"project: {project or '(未束縛)'}")
+        print(f"project: {project or '(未設定)'}")
         if repo and not project:
-            print(f"未束縛。束縛するには: project_bind.py github {repo} <project>")
+            print(f"このリポジトリはプロジェクト未設定。登録するには: project_bind.py github {repo} <プロジェクト名>")
         return
 
     if len(args) < 3:
@@ -64,7 +64,7 @@ def main():
     # プロジェクトのディレクトリも用意（無ければ）
     os.makedirs(os.path.join(TASK_ROOT, "projects", project, "tasks"), exist_ok=True)
     os.makedirs(os.path.join(TASK_ROOT, "projects", project, "kb"), exist_ok=True)
-    print(f"束縛を記録しました: {line}")
+    print(f"プロジェクトに割り当てて登録しました: {line}")
 
 
 if __name__ == "__main__":

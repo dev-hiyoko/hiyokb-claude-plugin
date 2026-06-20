@@ -109,7 +109,7 @@ hiyokb (plugin)
   - **slack**: target = チャンネル、filter = `mentions`(既定)/`all`。
   これにより「業務系は自分アサインのみ・個人系はアサインせず立てたものも拾う」を1設定で両立できる
   （アサインを前提にしない個人プロジェクトへの対応）。未設定ソースは従来どおり横断収集（後方互換）。
-- `project_map` — リポジトリ等のソース対象を hiyokb プロジェクトに束縛する（§6.5）。
+- `project_map` — リポジトリ等のソース対象を hiyokb プロジェクトに割り当てる（§6.5）。
 - `identities` — 各ソースでの自分の識別子。
 
 ## 6.5 プロジェクト境界（cwd＝リポジトリ → プロジェクト）
@@ -121,9 +121,9 @@ hiyokb (plugin)
 - **解決**: SessionStart 等で cwd の `git remote(origin)` → `owner/repo` → `project_map` で project を決定
   （`_config.current_project`）。タスク id からの振り分けは `_config.route_task`（`gh:owner/repo#n` →
   repo 一致 → owner 一致、`bl:KEY-n` → projectKey、`slack:ch-ts` → channel）。
-- **束縛は「聞いて記憶」**: 未束縛のリポジトリでは SessionStart が「どのプロジェクト？」の確認を促し、
+- **割り当ては「聞いて記憶」**: プロジェクト未設定のリポジトリでは SessionStart が「どのプロジェクト？」の確認を促し、
   答えを `project_bind.py`（`_config.add_binding` で `project_map` に追記）で保存。これは hiyokb 唯一の
-  config 書き込み。確定するまで自動記録の宛先を決めない（生ログは inbox に退避され続ける）。
+  config 書き込み。決まるまで自動記録の宛先を決めない（生ログは inbox に保存され続ける）。
 - **所有権**: タスクの project は「ドシエ frontmatter の project が最優先、無ければ `project_map` で id から
   導出」。`build_index` は全件の index.md を生成しつつ `--project <名>` で現プロジェクトのみ表示できる。
 - **KB の置き場所**: 既定で `projects/<project>/kb`。複数プロジェクトに効く横断汎用な知識だけ global `kb/`。

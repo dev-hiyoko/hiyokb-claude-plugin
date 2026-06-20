@@ -2,7 +2,7 @@
 """SessionStart で実行し、タスク状況を簡潔に提示する（読み取りのみ・ネットワーク無し）。
 
 cwd（起動リポジトリ）から hiyokb プロジェクトを解決し、**表示・自動記録・KB を現プロジェクトに
-限定**する。未束縛のリポジトリなら「どのプロジェクトか」をユーザーに確認させる指示を出す。
+限定**する。プロジェクト未設定のリポジトリなら「どのプロジェクトか」をユーザーに確認させる指示を出す。
 出力はセッションのコンテキストに注入されるため短く保つ。
 """
 import glob
@@ -110,9 +110,9 @@ def print_capture_instruction(cfg, project=None, unbound=False):
     print()
     print("## hiyokb: 暗黙キャプチャ（明示的に頼まれなくても自動で記録する）")
     if unbound:
-        print("- このリポジトリは**プロジェクト未確定**。確定するまでドシエ/KB へ自動書き込みしない"
-              "（要点はセッション終了時に inbox へ退避される）。上の確認でプロジェクトが決まったら、"
-              "`projects/<決定>/` に記録を開始する。")
+        print("- このリポジトリは**プロジェクト未設定**。決まるまではドシエ/KB へ自動で書き込まない"
+              "（要点はセッション終了時に控えとして inbox に保存されます）。上の確認でプロジェクトが決まったら、"
+              "`projects/<決まった名前>/` に記録を始める。")
         print("- `sensitive` を含む内容は外部送信を伴う処理を避ける。")
         return
     print("作業しながら知識を貯める。タスクに取り組む中で **決定事項・調査結果・次アクション** が"
@@ -141,13 +141,14 @@ def print_capture_instruction(cfg, project=None, unbound=False):
 
 
 def print_unbound(repo):
-    print("## hiyokb: このリポジトリは未束縛")
-    print(f"- 現在地（git remote）: **{repo}** — どの hiyokb プロジェクトに属するか未設定。")
+    print("## hiyokb: このリポジトリのプロジェクトが未設定です")
+    print(f"- 今いるリポジトリ: **{repo}**（どのプロジェクトの作業か、まだ登録されていません）")
     kps = known_projects()
-    print(f"- ユーザーに確認: 既知プロジェクト [{', '.join(kps) or 'なし'}] のどれか、または新規名。")
-    print(f"- 決まったら保存（次回から自動解決）: "
-          f"`python3 \"{os.path.join(SCRIPTS_DIR, 'project_bind.py')}\" github {repo} <project>`")
-    print("- 束縛が決まるまで、記録先プロジェクトを勝手に決めない（先に確認する）。")
+    print(f"- ユーザーに「このリポジトリはどのプロジェクトの作業ですか？」と確認する"
+          f"（登録済み: [{', '.join(kps) or 'まだ無し'}] から選ぶ／新しい名前でもOK）。")
+    print(f"- 決まったら登録（次回から自動で判別されます）: "
+          f"`python3 \"{os.path.join(SCRIPTS_DIR, 'project_bind.py')}\" github {repo} <プロジェクト名>`")
+    print("- 登録できるまでは、タスクやメモの保存先を勝手に決めない（先に確認する）。")
 
 
 def main():
@@ -176,7 +177,7 @@ def main():
     else:
         print("## hiyokb の状況")
         if repo:
-            print(f"- 現在地 {repo} は未束縛（下記参照）。全プロジェクト横断で表示中。")
+            print(f"- 今いるリポジトリ {repo} はプロジェクト未設定（下記参照）。今は全プロジェクトをまとめて表示中。")
         print(f"- アクティブなタスク: {len(rows)} 件")
         show = rows
 

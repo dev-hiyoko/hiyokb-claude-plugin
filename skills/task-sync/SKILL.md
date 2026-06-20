@@ -13,12 +13,30 @@ allowed-tools: Bash, Read
 GitHub は `gh` CLI（スクリプトが直接取得）、Slack/Backlog は **MCP ツール経由**（このスキルが取得し、正規化して正準ライターに渡す）。
 
 ## 1. GitHub（gh CLI）
+
+### 1-0. 初回だけ：見る範囲をユーザーに確認する
+config に GitHub の範囲指定（`sources.github.owners` も `sources.github.scopes`）が**まだ無い**＝初回セットアップのときは、**黙って既定で進めず**、平易に質問する（既定のままだと「自分にアサインされた issue」しか拾わず、**組織(org)のリポジトリや、自分が立てただけ/未アサインの issue が漏れる**ため）:
+
+1. **どこを見ますか？** 「個人のリポジトリだけ」か「会社・組織(org)の issue も見る」か。org も見るなら **org 名**を聞く（`gh org list` で候補を見せてもよい）。複数可。
+2. **どの issue を拾いますか？** 「自分にアサインされたものだけ」／「自分が立てたものも」／「その範囲の issue 全部」。
+
+聞いた答えを config に書く（owner 単位で行を足す。filter は `assigned` 既定 / `created` / `all`）:
+```yaml
+sources:
+  github:
+    scopes:
+      - <your-account> : assigned     # 個人：自分にアサインされたもの
+      - <your-org>     : assigned     # 組織：必要に応じて created / all
+```
+> 一度書けば次回からは聞かない。後で変えたいときは config を直すか、その都度頼めばよい旨を伝える。
+
+### 1-1. 取得
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/sync_github.py"
 ```
-- 成功: `~/.hiyokb/sources/github.md` を上書き。失敗: 前回値を保持し stale。
+- 成功: `~/.hiyokb/sources/github.md` を上書き。失敗: 前回値を保持（古いデータのまま表示）。
 - `gh auth status` が未ログインなら、その旨を伝え `gh auth login` を促す（こちらで認証はしない）。
-- 取得範囲は `sources.github.scopes`（プロジェクト=owner/repo 単位の filter）で決まる。未設定なら `owners` を assigned で取得。**アサインせず立てた issue が一覧に出ない**という相談には、その repo を `scopes` に `created` か `all` で追加するよう案内する（例: `- me/notes : created`）。
+- 範囲は `sources.github.scopes` で決まる（未設定時は `owners` を assigned で取得）。「**アサインせず立てた issue が出ない**」「**org のが出ない**」という相談には、その owner/repo を `scopes` に `created` か `all` で足すよう案内（例: `- your-org : all`）。
 
 ## 2. Slack（MCP）
 `enabled_sources` に `slack` が無ければスキップ。`identities.slack` 未設定もスキップ（一言伝える）。両方OKなら:
@@ -61,10 +79,18 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/build_index.py"
 ```
 ソース由来とローカル注釈（ドシエ frontmatter）を所有権ルールでマージ。ローカル注釈は保持される。
 
-## 5. 報告
-- ソース別の同期件数、`⚠️ stale ソース`（前回値である旨）を明示。
-- 同一案件が複数ソースに重複していそうなら `/hiyokb:task-link` を提案。
-- 着手は `/hiyokb:task-focus <id>` へ。
+## 5. 報告と「次の一手」
+まず結果を一言で（ソース別の同期件数、`⚠️ 古いデータのまま`のソースがあればその旨）。
+
+そのうえで**「次に何をすればいいか」を、迷わない順で 1〜2 個だけ**示す（設定の話は最後に、必要な人だけ向けに）:
+1. **まず一覧を見る** → `/hiyokb:task-list`（今いるリポジトリのプロジェクトのタスクだけ表示。「全部見たい」なら全プロジェクト横断）
+2. **取りかかるタスクを決めて着手** → `/hiyokb:task-focus <タスクID>`（手順に沿って1ステップずつ進む。作業メモは自動でそのタスクに貯まる）
+
+（任意・必要になったら）同じ案件が複数ソースにある／取得範囲を変えたいときだけ:
+- 複数ソースの重複をまとめる → `/hiyokb:task-link`
+- Slack/Backlog も集めたい・GitHub の取得範囲を変えたい → README の「設定」を案内（**普段は触らなくてよい**）
+
+用語は避けて平易に伝える（「config の enabled_sources に…」のような設定用語を最初から並べない）。
 
 ## 注意
 - index.md は**自動生成物**。手で編集しない（真実はソースキャッシュとドシエ frontmatter）。

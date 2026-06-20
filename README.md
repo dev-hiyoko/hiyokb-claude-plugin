@@ -76,7 +76,7 @@ claude --plugin-dir /path/to/hiyokb
 | `enabled_sources` | 取得するソース。無効ソースは取得せず一覧にも出ない | `[github]` / `[github, slack, backlog]` |
 | `sources.github.owners` | GitHub の参照範囲（owner で限定。空なら担当 issue 全部）。`scopes` 未指定時の後方互換 | `[your-org]` / `[your-account]` / `[]` |
 | `sources.<src>.scopes` | 取得範囲を target 単位で指定（github=owner/repo・backlog=projectKey・slack=channel）。`<target> : <filter>` を1行1スコープ。下記参照 | 下記参照 |
-| `project_map` | リポジトリ等→hiyokb プロジェクトの束縛。`<source> <target> : <project>` を1行1件（未束縛は起動時に質問して追記）。下記参照 | 下記参照 |
+| `project_map` | リポジトリ等→hiyokb プロジェクトの割り当て。`<source> <target> : <project>` を1行1件（未設定は起動時に質問して追記）。下記参照 | 下記参照 |
 | `identities` | 各ソースでの自分の識別子（Slack/Backlog 収集に必要） | `github: your-account` |
 | `timezone` | 日付判定の基準 | `Asia/Tokyo` |
 | `capture.enabled` | 暗黙キャプチャ全体の on/off（false で従来どおり明示呼び出しのみ） | `true` |
@@ -137,7 +137,7 @@ project_map:
 ```
 
 - **解決**: 起動した cwd の `git remote(origin)` → `owner/repo` → `project_map` で project を決定。
-- **未束縛なら起動時に質問**: 対応が無いリポジトリでは「どのプロジェクト？」と確認し、答えを記憶:
+- **未設定なら起動時に質問**: 割り当てが無いリポジトリでは「このリポジトリはどのプロジェクトの作業？」と確認し、答えを登録:
   ```bash
   python3 scripts/project_bind.py github <owner/repo> <project>   # 次回から自動解決
   python3 scripts/project_bind.py --whoami                        # 現在地の解決結果を確認

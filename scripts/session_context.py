@@ -15,10 +15,12 @@ import sys
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPTS_DIR)
 import _config  # noqa: E402
+import build_index as bi  # noqa: E402  ローダ/マージを再利用（index.md の表フォーマットに依存しない）
 from _config import capture_config  # noqa: E402
 
 TASK_ROOT = os.path.expanduser("~/.hiyokb")
-INDEX = os.path.join(TASK_ROOT, "index.md")
+
+STATUS_DISP = {"in_progress": "🔵", "blocked": "⛔", "review": "👀", "todo": "⚪", "done": "✅"}
 
 
 def read_cwd():
@@ -30,27 +32,17 @@ def read_cwd():
         return os.getcwd()
 
 
-def index_rows():
-    """index.md の表を読む。各行 [id,title,source,status,priority,due,project,dossier]。"""
-    if not os.path.exists(INDEX):
-        return [], None
-    rows, stale_line = [], None
-    in_table = False
-    for line in open(INDEX, encoding="utf-8"):
-        if line.startswith("**ソース同期状況**"):
-            stale_line = line.strip()
-        if line.startswith("|----"):
-            in_table = True
-            continue
-        if in_table and line.startswith("|"):
-            cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) >= 6:
-                rows.append(cells)
-    return rows, stale_line
-
-
-def row_project(r):
-    return r[6] if len(r) > 6 else ""
+def active_rows():
+    """build_index のデータ関数から、未完タスク（dict）を状態→優先度順で返す。"""
+    src_tasks, src_meta = bi.load_sources()
+    loc = bi.load_dossiers()
+    rows = bi.merge(src_tasks, src_meta, loc)
+    active = [r for r in rows if r["status"] != "done"]
+    active.sort(key=lambda r: (bi.ACTIVE_ORDER.get(r["status"], 5),
+                               bi.PRIO_ORDER.get(r["priority"], 3),
+                               r["due"] or "9999", r["id"]))
+    stale = any(m.get("stale") for m in src_meta.values())
+    return active, stale
 
 
 def known_projects():
@@ -157,11 +149,11 @@ def main():
     cfg = capture_config()
     cwd = read_cwd()
     repo, project = _config.current_project(cwd)
-    rows, stale_line = index_rows()
-
-    # ストアはあるが index 未生成
+    rows, stale = active_rows()
     unbound = bool(repo and not project)
-    if not rows and not os.path.exists(INDEX):
+
+    # タスクもドシエもまだ無い（収集前）
+    if not rows:
         if unbound:
             print_unbound(repo)
         if cfg["enabled"] and cfg["inline_recording"]:
@@ -169,33 +161,33 @@ def main():
         return
 
     if project:
-        prows = [r for r in rows if row_project(r) == project]
+        show = [r for r in rows if r["project"] == project]
         print(f"## hiyokb の状況（プロジェクト: {project}）")
-        print(f"- このプロジェクトのアクティブなタスク: {len(prows)} 件"
-              + (f" / 全体 {len(rows)} 件（`/hiyokb:task-list --all`）" if len(rows) != len(prows) else ""))
-        show = prows
+        print(f"- このプロジェクトの未完タスク: {len(show)} 件"
+              + (f"（全体 {len(rows)} 件は `/hiyokb:task-list --all`）" if len(rows) != len(show) else ""))
     else:
+        show = rows
         print("## hiyokb の状況")
         if repo:
             print(f"- 今いるリポジトリ {repo} はプロジェクト未設定（下記参照）。今は全プロジェクトをまとめて表示中。")
-        print(f"- アクティブなタスク: {len(rows)} 件")
-        show = rows
+        print(f"- 未完タスク: {len(rows)} 件")
 
-    show_proj = project is None   # 横断表示のときは各タスクの所属プロジェクトを併記
+    show_proj = project is None   # 横断表示のときは所属プロジェクトを併記
     for r in show[:6]:
-        tid, title, status = r[0], r[1], r[3]
-        due = r[5] if len(r) > 5 else ""
-        proj = row_project(r)
+        icon = STATUS_DISP.get(r["status"], "・")
+        tid = r.get("id_display", r["id"])
         tags = []
-        if show_proj and proj:
-            tags.append(f"📁{proj}")
-        if due:
-            tags.append(f"期限 {due}")
+        if show_proj and r["project"]:
+            tags.append(f"📁{r['project']}")
+        if r["priority"] in ("high", "mid"):
+            tags.append("🔴高" if r["priority"] == "high" else "🟡中")
+        if r["due"]:
+            tags.append(f"期限{r['due']}")
         suffix = f"（{' / '.join(tags)}）" if tags else ""
-        print(f"  - [{status}] {tid}: {title}{suffix}")
+        print(f"  - {icon} {tid}: {r['title']}{suffix}")
     if len(show) > 6:
         print(f"  - …他 {len(show) - 6} 件（`/hiyokb:task-list`）")
-    if stale_line and "STALE" in stale_line:
+    if stale:
         print("- ⚠️ 一部ソースは前回値（`/hiyokb:task-sync` で更新）")
     kb = kb_page_count(project)
     if kb:

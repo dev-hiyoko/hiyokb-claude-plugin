@@ -37,6 +37,11 @@ ACTIVE_ORDER = {"in_progress": 0, "blocked": 1, "review": 2, "todo": 3, "done": 
 LOCAL_STATUS = {"in_progress", "blocked", "review"}
 DONE_STATES = {"done", "closed"}
 
+STATUS_DISP = {"in_progress": "🔵 着手中", "blocked": "⛔ 詰まり", "review": "👀 レビュー",
+               "todo": "⚪ 未着手", "done": "✅ 完了"}
+PRIO_DISP = {"high": "🔴 高", "mid": "🟡 中", "low": "🔵 低"}
+PRIO_ORDER = {"high": 0, "mid": 1, "low": 2, "": 3}
+
 
 # ---------- frontmatter 簡易パーサ（統制された形式専用） ----------
 def parse_value(val):
@@ -211,22 +216,31 @@ def render(rows, src_meta, include_done, project=None):
     if project:
         rows = [r for r in rows if r["project"] == project]
     visible = [r for r in rows if include_done or r["status"] != "done"]
-    visible.sort(key=lambda r: (ACTIVE_ORDER.get(r["status"], 5), r["due"] or "9999", r["id"]))
+    visible.sort(key=lambda r: (ACTIVE_ORDER.get(r["status"], 5),
+                                PRIO_ORDER.get(r["priority"], 3),
+                                r["due"] or "9999", r["id"]))
 
-    out.append("| id | title | source | status | priority | due | project | dossier |")
-    out.append("|----|-------|--------|--------|----------|-----|---------|---------|")
+    # 状態 → 優先度順の単一表。状態/優先度は絵文字、紐づきは参照元との対応をひと目で。
+    show_proj = not project   # プロジェクト絞り込み時は見出しに出るので列を省く
+    cols = ["状態", "ID", "タイトル"] + (["プロジェクト"] if show_proj else []) + ["優先度", "期限", "紐づき"]
+    out.append("| " + " | ".join(cols) + " |")
+    out.append("|" + "|".join(["---"] * len(cols)) + "|")
     for r in visible:
         idc = r.get("id_display", r["id"])
-        st = r["status"] + (" ⚠️" if r["stale"] else "") + (" 🔒" if r["sensitive"] else "")
-        title = (r["title"][:50] + "…") if len(r["title"]) > 51 else r["title"]
+        st = STATUS_DISP.get(r["status"], r["status"]) + (" ⚠️" if r["stale"] else "") + (" 🔒" if r["sensitive"] else "")
+        title = (r["title"][:48] + "…") if len(r["title"]) > 49 else r["title"]
         title = title.replace("|", "\\|")
-        out.append(f'| {idc} | {title} | {r["source"]} | {st} | {r["priority"]} | '
-                   f'{r["due"]} | {r["project"]} | {r["dossier"]} |')
+        prio = PRIO_DISP.get(r["priority"], "—")
+        link = "🔗 複数ソース" if "(+" in idc else ("📄 ドシエあり" if r["dossier"] else "⊘ ソースのみ")
+        cells = [st, idc, title] + ([r["project"] or "—"] if show_proj else []) + [prio, r["due"] or "—", link]
+        out.append("| " + " | ".join(cells) + " |")
 
+    out.append("")
+    out.append("> 凡例: 状態 🔵着手中/⛔詰まり/👀レビュー/⚪未着手  優先度 🔴高/🟡中/🔵低  "
+               "紐づき 📄ドシエあり/🔗複数ソース/⊘ソースのみ（未着手）")
     done_n = sum(1 for r in rows if r["status"] == "done")
     if not include_done and done_n:
-        out.append("")
-        out.append(f"_完了 {done_n} 件は非表示（`/hiyokb:task-list --all` で表示）_")
+        out.append(f"_完了 {done_n} 件は非表示（`--all` で表示）_")
     out.append("")
     return "\n".join(out)
 

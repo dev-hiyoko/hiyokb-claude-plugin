@@ -180,10 +180,18 @@ def main():
         print(f"- アクティブなタスク: {len(rows)} 件")
         show = rows
 
+    show_proj = project is None   # 横断表示のときは各タスクの所属プロジェクトを併記
     for r in show[:6]:
         tid, title, status = r[0], r[1], r[3]
         due = r[5] if len(r) > 5 else ""
-        print(f"  - [{status}] {tid}: {title}" + (f"（期限 {due}）" if due else ""))
+        proj = row_project(r)
+        tags = []
+        if show_proj and proj:
+            tags.append(f"📁{proj}")
+        if due:
+            tags.append(f"期限 {due}")
+        suffix = f"（{' / '.join(tags)}）" if tags else ""
+        print(f"  - [{status}] {tid}: {title}{suffix}")
     if len(show) > 6:
         print(f"  - …他 {len(show) - 6} 件（`/hiyokb:task-list`）")
     if stale_line and "STALE" in stale_line:

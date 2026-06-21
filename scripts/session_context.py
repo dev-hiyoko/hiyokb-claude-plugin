@@ -124,9 +124,16 @@ def print_capture_instruction(cfg, project=None, unbound=False):
     if scope == "inbox":
         print("- 自動書き込みの範囲 = **inbox のみ**。ドシエ/KB への反映は人に確認してから行う。")
     elif scope == "kb":
-        print(f"- 自動書き込みの範囲 = **KB まで**。ドシエ追記に加え、再利用可能な確定知見は"
-              f"`~/.hiyokb/{kb_dir}` へ出典付きで自動追記してよい（横断汎用な知識のみ明示指示で global `kb/` へ）。"
-              "索引は `build_kb_index.py` で再生成。")
+        tmpl = os.path.join(os.path.dirname(SCRIPTS_DIR), "templates", "kb-article.md")
+        bk = os.path.join(SCRIPTS_DIR, "build_kb_index.py")
+        print(f"- 自動書き込みの範囲 = **KB まで**（人への確認は不要・確定知見は自動で昇格する）。"
+              "**ドシエの有無に関わらず**、再利用可能な確定知見（設定・手順・原因と対策・"
+              "設計判断など、後で引けて役立つもの）が定まったら、その都度 "
+              f"`~/.hiyokb/{kb_dir}/` に出典付きで**追記する**（未確定・噂・要約途中は昇格しない）。")
+        print(f"  - 雛形 `{tmpl}` を使い、`source`(出自) を必ず埋め、本文は既存ページへ `[[ ]]` で"
+              "リンクして孤立させない。アクティブなドシエがあれば経緯はそちらにも残す。"
+              "横断汎用な知識のみ明示指示で global `kb/` へ。")
+        print(f"  - 追記後は索引を再生成: `python3 \"{bk}\"`。")
     else:  # dossier
         print("- 自動書き込みの範囲 = **ドシエ追記まで**。KB への昇格は人に確認してから行う。")
     print("- `sensitive` を含む内容は外部送信を伴う処理を避ける。")
